@@ -1,0 +1,129 @@
+---
+title: "Jump Starting a Visualization"
+author: "Alana Unfried"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+#This particular code chunk has "include: false" which with override the global option "echo: true" and hide this chunk in the rendered file
+#echo: true in the YAML means the file will show code and output when it is rendered 
+
+
+#load packages that we will use in this file
+
+#loads ggplot2 and other packages
+library(tidyverse) 
+
+#can also directly load the ggplot2 package this way
+library(ggplot2)
+
+#load the package that includes the data we will use
+library(palmerpenguins)
+
+#uncomment these two lines and install the packages. This only needs to be done once! Comment them out again (#) after install
+#install.packages("ggThemeAssist") 
+#install.packages("esquisse")
+
+```
+
+# Welcome to Quarto and RStudio for STAT 310!
+
+In this file, we will explore quickly creating and customizing graphs in 3 ways.
+
+## Create a quick plot with ChatGPT
+
+We will quickly preview how ChatGPT can create R code for a plot, but then we won't revisit ChatGPT until we have a strong foundation with R. You can just watch Dr. U do this, or if you have genAI set up on your computer, you can see what output you get.
+
+Paste the following prompt into ChatGPT:
+
+"In R, use Quarto notation, use ggplot for graphics and use the native pipe and tidyverse for syntax. I am using the palmerpenguins R package. Create code to make a scatterplot of bill length on the x axis and bill depth on y. Color the points based on penguin species, using color-blind-friendly colors."
+
+```{r}
+#| label: chatgpt-r
+
+#paste the code chatgpt generates here
+
+```
+
+## Using `esquisse` to get started
+
+We will be learning the basic structure of `ggplot2` (grammar of graphics plot 2) throughout the semester, but to help you get started we will use two packages to help us out, the first package being `esquisse`.
+
+First we need to load the package. If you haven't already, install the package by removing the comment \# before the install code. After you run that code you can delete the install code or add the comment \# back to the code (we don't want to run this code again!).
+
+```{r}
+#| label: load-equisse
+
+library(esquisse)
+```
+
+Now we will get the "GUI" or graphic user interface running. In the library `palmerpenguins` there is a data set called `penguins`. We will use that.
+
+```{r}
+#| label: load-data
+
+
+library(palmerpenguins)
+data("penguins")
+
+#drop rows with missing values
+penguins_clean <- penguins |>
+  drop_na()
+```
+
+You can also click on the Dataset Name in the Environment tab to open a table of the data. Take note of the variable types in the data.
+
+Now let's make a visualization. Click the "play" button on the following code chunk. Use the interface to choose variables to include and make edits to the graph.
+
+Be sure to add a title and axis labels as well. When you have created the graph you want, copy the code to your clipboard.
+
+```{r}
+#| label: run-esquisse
+#| eval: false
+#| 
+esquisse::esquisser(penguins_clean)
+```
+
+Paste the code generated from esquisse into the code chunk below and run it:
+
+```{r}
+#| label: my-graph
+
+
+
+
+
+```
+
+## Making the graph your own with `ggThemeAssist`
+
+After you install the package, go ahead and run the library.
+
+```{r}
+#| label: load-themeassist
+
+library(ggThemeAssist)
+
+#ggThemeAssistGadget(gg)
+
+
+```
+
+Highlight the code for your visualization. Then in the Menu under "Addins" go to "ggplot Theme Assistant". A GUI should appear that allows you to specify text sizes, colors, etc. After you finish the code will be added to the end of your graph!
+
+If the addin is not appearing for you, you can use the ggThemeAsssistGadget function shown in the previous code chunk. Output your graph to an object called "gg" and then put "gg" in the function parentheses. Run that line of code, and the gadget should appear.
+
+## Save your graph
+
+After your code for your graph (no + is needed), add a line of code like so:
+
+`ggsave(filename = "mypenguinplot.png")`
+
+and run the full code chunk. In your project folder you should now see a png file of your graph. Check the box next to the png (if on the server) and then select More \>\> Export. Upload to Canvas!
