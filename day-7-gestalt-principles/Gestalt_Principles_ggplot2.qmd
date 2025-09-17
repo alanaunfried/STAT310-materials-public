@@ -1,0 +1,107 @@
+---
+title: "Gestalt Principles"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+#load hte tidyverse
+library(tidyverse)
+
+#set the default theme for all graphs
+theme_set(theme_light())
+```
+
+## Fake Data  
+
+First, let's read in the data.  
+```{r}
+fake_data <- read_csv("fake_data.csv")
+```
+
+### Proximity  
+
+```{r}
+fake_data |> 
+  ggplot(aes(x = Factor1, y = Response)) +
+  geom_col(aes(fill = Factor2), 
+           position = position_dodge(),
+           color = "black") 
+```
+
+### Encolsure + Proximity 
+
+```{r}
+fake_data |>
+  ggplot(aes(x = Factor1, y = Response)) +
+  geom_col(aes(fill = Factor2),
+           color = "black") +
+  facet_wrap(~Factor2) 
+```
+
+### Similarity  
+
+```{r}
+fake_data |>
+  ggplot(aes(x = Factor1, y = Response)) +
+  geom_point(aes(shape = Factor2,
+                 color = Factor2), 
+             size = 6)
+```
+
+### Similarity + Connection
+
+```{r}
+fake_data |>
+  ggplot(aes(x = Factor1, y = Response)) +
+  geom_point(aes(shape = Factor2,
+                 color = Factor2), 
+             size = 6) +
+  geom_line(aes(group = Factor2,
+                color = Factor2), 
+            size = 2) 
+```
+
+### Similarity + Connection
+
+```{r}
+fake_data |> 
+  mutate(is_A = (Factor2 == "A")) |>
+  ggplot(aes(x = Factor1, 
+             y = Response, 
+             color = is_A)) +
+  geom_point(aes(shape = Factor2), 
+             size = 6) +
+  geom_line(aes(group = Factor2), 
+            linewidth = 2) +
+  guides(color = "none")
+```
+
+
+### Enclosure + Similarity + Connection
+
+```{r}
+fake_data |>
+  mutate(is_A = (Factor2 == "A")) |>
+  ggplot(aes(x = Factor1, 
+             y = Response, 
+             color = is_A)) +
+  geom_point(aes(shape = Factor2), 
+             size = 6) +
+  geom_line(aes(group = Factor2), 
+            linewidth = 2) +
+  guides(color = "none") +
+  geom_rect(xmin = 0.75, xmax = 1.25, ymin = 2, ymax = 17, 
+            fill = "beige", alpha = 0.1, color = "black") +
+  geom_rect(xmin = 1.75, xmax = 3.25, ymin = 2, ymax = 17, 
+            fill = "beige", alpha = 0.1, color = "black")
+
+```
+
+
