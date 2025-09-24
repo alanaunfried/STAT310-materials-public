@@ -121,7 +121,7 @@ We can use `fct_infreq` to apply the Law of Simplicity for comparison.
 ```{r}
 #| label: fct_infreq
 
-#fct_infreq will reorder the categories/level by frequency of values, from least to greatest
+#fct_infreq will reorder the categories/level by frequency of values, from least to greatest. Used when R is computing the frequencies automatically.
 gss |> 
   ggplot(aes(y = fct_infreq(relig))) +
   geom_bar() + 
@@ -274,6 +274,7 @@ gss_religion |>
   #exclude anyone who did not answer
   filter(marital != "No answer") |> 
   #now turn it into a graph!
+  #fct_reorder is used (versus fct_infreq) when the variable is already summarized and you reorder by that value (in this case, proportion) 
   ggplot(aes(y = fct_reorder(marital, proportion),
              x = proportion, fill = marital)) +
   geom_col() +
