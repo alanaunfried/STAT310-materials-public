@@ -1,0 +1,391 @@
+---
+title: "Modifying Visualizations of Amounts for Categorical Variables"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse) #loading includes packages ggplot2 and forcats which we will rely on heavily for visualizing amounts
+```
+
+## The General Social Survey  
+"Since 1972, the General Social Survey (GSS) has provided politicians, policymakers, and scholars with a clear and unbiased perspective on what Americans think and feel about such issues as national spending priorities, crime and punishment, intergroup relations, and confidence in institutions." (http://gss.norc.org/)
+
+We are going to look at a subset of the data, from 2000-2014
+
+```{r}
+#| label: read data
+
+gss <- read_csv("gss_subset.csv")
+```
+
+
+## Bar Plot Basics
+
+Let's start with a basic bar plot for Religion
+
+### Counts and proportions
+
+First, let's look at the count/frequency/proportion statistics for the religion variable.  
+
+```{r}
+#| label: religion counts/props
+
+#Counts of each religion
+gss_summary <- gss |>
+  count(relig)
+
+#print the counts
+gss_summary
+
+#Create a table of proportions of responses in each religious group, rather than count
+gss |> 
+  #count number of responses selecting each religion
+  count(relig) |>
+  #mutate function creates a new variable according to the calculation specified
+  #n is a variable in the data table created when counting
+  mutate(prop = n/sum(n))
+
+#Alternatively since we already stored the table of counts, we could do:
+gss_summary |> 
+  mutate(prop = n/sum(n))
+
+#an alternative way to calculate proportions
+#there is almost always more than 1 way to do things in R!
+gss |>
+  group_by(relig) |>
+  #summarize function calculates a statistic
+  summarize(prop = n() / nrow(gss))
+
+
+```
+
+### A Simple Bar Plot
+
+Here is the default graphic for a barplot of the counts.  Notice, if we use `geom_bar()` it will automatically summarize for us.
+
+```{r}
+#| label: basic bar plot
+
+#Create a basic bar plot of counts from the original data
+gss |>
+  ggplot(aes(x = relig)) +
+  geom_bar()
+
+#Create a basic bar plot of counts from the summarized data
+gss_summary |>
+  ggplot(aes(x = relig, y = n))+
+  geom_col()
+
+#Graph the proportions instead of counts. What changes compared to the previous graph?
+gss |>
+  group_by(relig) |>
+  #summarize function calculates a statistic
+  summarize(prop = n() / nrow(gss)) |>
+  ggplot(aes(x = relig, y = prop)) +
+  geom_col()
+
+```
+
+
+Notice that going with just the default is not going to give us a great graph. 
+
+We could switch axis assignments which can help with label readability:
+
+```{r}
+#| label: bar plot y
+
+gss |> 
+  ggplot(aes(y = relig)) +
+  geom_bar()
+```
+
+But we need to consider some modifications. 
+
+## Using forcats
+
+The `forcats` package allows us to work directly with categorical variables in ways that make applying Gestalt Principles more accessible.
+
+Learn more here: https://forcats.tidyverse.org/ 
+
+### Reordering Categories  
+
+We can use `fct_infreq` to apply the Law of Simplicity for comparison.  
+
+```{r}
+#| label: fct_infreq
+
+#fct_infreq will reorder the categories/level by frequency of values, from least to greatest
+gss |> 
+  ggplot(aes(y = fct_infreq(relig))) +
+  geom_bar() + 
+  labs(title = "Bar Plot with Law of Simplicity",
+       y = "Religion")
+```
+
+
+We can use `fct_rev` to do the reverse order.
+```{r}
+#| label: fct_rev
+
+gss |> 
+  ggplot(aes(y = fct_rev(fct_infreq(relig)))) +
+  geom_bar()
+```
+
+
+
+### Collapsing Levels  
+We can use `fct_collapse` to redefine our factor levels.  Remember - doing this is a form of analysis because you are making some assumptions about what groups go together!  
+
+```{r}
+#| label: fct_collapse
+
+gss |> 
+  #mutate creates a new variable called "religion" that is a simplified version of the original "relig" variable
+  mutate(religion = fct_collapse(relig,
+                                 Christian = c("Catholic",
+                                               "Christian",
+                                               "Orthodox-christian",
+                                               "Protestant"),
+                                 Eastern = c("Buddhism", 
+                                             "Hinduism",
+                                             "Other eastern"), 
+                                 Jewish = c("Jewish"),
+                                 Muslim = c("Moslem/islam"),
+                                 None = c("None"),
+                                 Unknown = c("No answer", 
+                                             "Don't know"),
+                                 Other = c("Other", 
+                                           "Native american",
+                                           "Inter-nondenominational"))) |> 
+  #use the new "religion" variable in the ggplot, still order by Law of Simplicity
+  ggplot(aes(y =  fct_infreq(religion))) +
+  geom_bar() 
+
+#Let's create a new dataset that includes the collapsed religion variable so we don't need to repeat the data cleaning code each time
+gss_religion <- gss |> 
+  mutate(religion = fct_collapse(relig,
+                                 Christian = c("Catholic",
+                                               "Christian",
+                                               "Orthodox-christian",
+                                               "Protestant"),
+                                 Eastern = c("Buddhism", 
+                                             "Hinduism",
+                                             "Other eastern"), 
+                                 Jewish = c("Jewish"),
+                                 Muslim = c("Moslem/islam"),
+                                 None = c("None"),
+                                 Unknown = c("No answer", 
+                                             "Don't know"),
+                                 Other = c("Other", 
+                                           "Native american",
+                                           "Inter-nondenominational")))
+
+```
+
+Return to the slides to start considering more than 1 categorical variable.
+
+## Two or more Categorical Variables
+
+As noted in the slides, we might use grouped or stacked bars to visualize more than 1 categorical variable.
+
+### Stacked Bars
+
+When we map a variable to "fill," the default position is a stacked bar chart. Both codes below create the same graph.
+
+```{r}
+gss_religion |> 
+  ggplot(aes(y = fct_infreq(religion), fill = marital)) +
+  geom_bar()
+
+gss_religion |> 
+  ggplot(aes(y = fct_infreq(religion), fill = marital)) +
+  geom_bar(position = "stack")
+```
+
+### Dodged/Grouped Bars
+
+We need to specify a different modified when we want to move away from the default. Here we dodge the bars (or group them).
+
+```{r}
+gss_religion |> 
+  ggplot(aes(y = fct_infreq(religion), fill = marital)) +
+  geom_bar(position = "dodge")
+```
+
+### Filled Bars
+
+For filled bars, notive the scale on the X axis. Is it really graphing a count?
+
+Note that "fill" is the only position that plots proportions by default. If you want to show proportions on a dodged bar chart, that takes more work. 
+
+```{r}
+gss_religion |> 
+  ggplot(aes(y = fct_infreq(religion), fill = marital)) +
+  geom_bar(position = "fill")
+```
+
+### Position=Identity
+
+What do you notice about this version that may be misleading? (Don't use this one!)
+
+```{r}
+gss_religion |> 
+  ggplot(aes(y = fct_infreq(religion), fill = marital)) +
+  geom_bar(position = "identity")
+```
+
+### Facet Wraps
+
+Use `facet_wrap` to create groups of visualizations based on a specific variable.
+
+```{r}
+#| label: facet_wrap
+
+#bar plot of collapsed religion variable, separated by marital status
+gss_religion |> 
+  ggplot(aes(y = fct_infreq(religion))) +
+  geom_bar() +
+  facet_wrap(~marital, nrow = 2)
+```
+
+
+Do we need to do a bit of data cleaning? Should we consider something other than count to display here? Should we switch the variable?
+
+```{r}
+#| label: facet_wrap with proportions
+#| eval: false
+#| include: false
+
+gss_religion |> 
+  #count number of observations in each religion x marital subgroup
+  count(religion, marital) |> 
+  #group_by tells R to consider the 7 religious groups separately
+  group_by(religion) |>
+  #because of group_by, proportions will be calculated WITHIN each religious group
+  mutate(proportion = n/sum(n)) |> 
+  #exclude anyone who did not answer
+  filter(marital != "No answer") |> 
+  #now turn it into a graph!
+  ggplot(aes(y = fct_reorder(marital, proportion),
+             x = proportion, fill = marital)) +
+  geom_col() +
+  #since proportions were calculated within each religious group, we should also display each religious group in its own graph
+  facet_wrap(~religion, nrow = 3) +
+  guides(fill = "none")
+
+
+```
+
+
+
+### Political Affiliation by Religion Group  
+
+Dodged bar chart showing proportions on they x axis, calculated within each religious group.
+
+Note how the bars are ordered. Does this follow a Gestalt Principle? Can we fix it?
+
+Try changing the position to fill to see the change in the graph.
+
+```{r}
+gss_religion |> 
+  mutate(part_aff = fct_collapse(partyid,
+                                 Conservative = c("Strong republican", 
+                                                  "Not str republican", 
+                                                  "Ind,near rep"),
+                                 Liberal = c("Strong democrat", 
+                                             "Not str democrat", 
+                                             "Ind,near dem")) |> 
+           fct_lump()) |> 
+  count(religion, part_aff) |> 
+  group_by(religion) |>
+  mutate(proportion = n/sum(n)) |>
+  #Try including the next three lines to see how the order of the bars changes
+  # mutate(religion = factor(religion, level = c("Jewish", "Muslim", "Eastern",
+  #                                              "None","Other",
+  #                                              "Christian", "Unknown"))) |> 
+  ggplot(aes(x = religion, y = proportion, fill = part_aff)) +
+  geom_col(position = "dodge") +   #try fill instead
+  labs(x = "Religion Groups", 
+       y = "Proportion within Religious Group", 
+       fill = "Party Affiliation") +
+  scale_fill_viridis_d() +
+  theme_bw() +
+  theme(legend.position = "top")
+```
+
+
+## Categorical Variable with a Summary Statistic/Numeric Variable
+
+### Average Age by Religion
+
+What is this graph missing? How is the height of the bar determined?
+
+```{r}
+gss_religion |> 
+  group_by(religion) |> 
+  summarise(Avg_age = mean(age, na.rm = TRUE)) |> 
+  ggplot(aes(y = fct_reorder(religion, Avg_age), x = Avg_age)) +
+  geom_col(aes(fill = religion)) +
+  guides(fill = "none") +
+  scale_fill_viridis_d() +
+  labs(y = "Religion Groups", x = "Average Age (years)") +
+  theme_bw()
+```
+
+How does this version improve the information provided? What might it be missing?
+
+```{r}
+library(see)
+gss_religion |> 
+  drop_na(age) |> 
+  ggplot(aes(x = fct_reorder(religion, age), y = age)) +
+  geom_boxplot(aes(fill = religion), alpha = 0.5) +
+  geom_violinhalf(aes(fill = religion), alpha = 0.2) + #from package "see"
+  labs(x = "Religion Groups", y = "Age (years)") + 
+  coord_flip() +
+  scale_fill_viridis_d() +
+  guides(fill = "none", color = "none") +
+  theme_bw()
+```
+
+
+
+### Religion by Income Level
+
+
+
+```{r}
+gss_religion |> 
+  filter(!rincome %in% c("Refused","Not applicable","No answer","Don't know")) |>
+  mutate(rincome = factor(rincome, levels = c("Lt $1000", "$1000 to 2999", 
+                                              "$3000 to 3999", "$4000 to 4999",
+                                              "$5000 to 5999", "$6000 to 6999",
+                                              "$7000 to 7999", "$8000 to 9999",
+                                              "$10000 - 14999", "$15000 - 19999",
+                                              "$20000 - 24999", "$25000 or more"))) |>
+  mutate(rincome = fct_collapse(rincome, '$0 to 4999' = c("Lt $1000", "$1000 to 2999", 
+                                              "$3000 to 3999", "$4000 to 4999"),
+                                          '$5000 to 9999' = c("$5000 to 5999", "$6000 to 6999",
+                                                              "$7000 to 7999", "$8000 to 9999"))) |> 
+  count(religion, rincome) |> 
+  group_by(religion) |>
+  mutate(proportion = n/sum(n)) |> 
+  ggplot(aes(y = religion , x = rincome, fill = proportion)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma") +
+  labs(y = "Religion Groups", x = "Income Level", fill = "Proportion") +
+  theme_bw()
+```
+
+
+
+
+
