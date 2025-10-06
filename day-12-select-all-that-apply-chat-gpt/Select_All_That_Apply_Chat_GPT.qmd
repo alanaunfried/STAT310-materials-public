@@ -1,0 +1,132 @@
+---
+title: "Select All That Apply and ChatGPT"
+format: html
+---
+
+## Goal
+
+My goal is to graph a select-all-that-apply survey question as 1 bar per response option, showing the proportion of respondents who chose each option. Here is what some example data looks like for this structure, assumign there was a select-all-that-apply question with 3 response options and 5 respondents:
+
+```{r}
+df <- tibble(
+  respondent_id = 1:5,
+  option_a = c(1, 0, 1, 1, 0),
+  option_b = c(0, 1, 1, 0, 1),
+  option_c = c(1, 1, 0, 1, 1)
+)
+
+df
+```
+
+
+## From Scratch
+
+If you wanted to create this graph without using generative AI to assist you, how would you get started? Write a brief paragraph discussing how you would tackle the issue of writing this code. What would be challenging? What seems straightforward, if anything?
+
+> Your Answer
+
+## Code from ChatGPT
+
+Within my ChatGPT Custom R project, I gave the following prompt:
+
+> how to graph a select all that apply question. each option is listed in its own binary column
+
+Here is the response that ChatGPT returned, followed by the code:
+
+*To graph a "select all that apply" question where each option is stored in its own binary column (e.g., 1 for selected, 0 or FALSE for not), you’ll want to:*
+
+-   *Pivot the data longer so each response is one row per option.*
+
+-   *Summarize counts or percentages of how often each option was selected.*
+
+-   *Plot the summarized data using ggplot2.*
+
+```{r}
+#| label: chat gpt code
+
+library(tidyverse)
+
+# Example data
+df <- tibble(
+  respondent_id = 1:5,
+  option_a = c(1, 0, 1, 1, 0),
+  option_b = c(0, 1, 1, 0, 1),
+  option_c = c(1, 1, 0, 1, 1)
+)
+
+# Pivot longer
+df_long <- df |>
+  pivot_longer(
+    cols = starts_with("option_"),
+    names_to = "option",
+    values_to = "selected"
+  ) |>
+  filter(selected == 1)
+
+# Summarize
+summary_df <- df_long |>
+  count(option) |>
+  mutate(percent = n / sum(n) * 100)
+
+# Plot
+summary_df |>
+  ggplot(aes(x = fct_reorder(option, n), y = n)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Selections per Option",
+    x = "Option",
+    y = "Number of Selections"
+  ) +
+  theme_minimal()
+```
+
+## Your Turn
+
+1. Run the code above. Does it work?
+
+> Answer here
+
+2. How does the R code look? Does it use the standard building blocks we have learned in class?
+
+> Answer here
+
+3. Does the graph appear to solve the problem that I prompted? 
+
+> Answer here
+
+4. Open the data, or print it in the code chunk below. Write a brief explanation of what each row and column of the data represents.
+
+> Answer here
+
+```{r}
+
+df
+
+```
+
+5. By hand/calculator, calculate the number of respondents that chose option a, option b, and option c. Do these counts match what is shown in the graph? 
+
+> Answer here
+
+6. Where did ChatGPT go wrong? Look at each section of the code and explain where you think ChatGPT made a mistake.
+
+> Answer here
+
+7. Now it's your turn. Using the same example dataset that ChatGPT generated, can you edit or write new code to correctly graph the **number** of respondents that selected each options?
+
+```{r}
+
+```
+
+
+8. Can you edit the code to now graph the percentage of respondents that selected each response option?
+
+```{r}
+
+```
+
+
+9. What did you learn about using ChatGPT to generate R code? How was it helpful? How did it hinder you?
+
+> Answer Here
