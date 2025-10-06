@@ -1,13 +1,20 @@
 ---
 title: "Select All That Apply and ChatGPT"
+author: "ChatGPT and <Your Name Here>"
 format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
 ---
 
 ## Goal
 
-My goal is to graph a select-all-that-apply survey question as 1 bar per response option, showing the proportion of respondents who chose each option. Here is what some example data looks like for this structure, assumign there was a select-all-that-apply question with 3 response options and 5 respondents:
+My goal is to graph a select-all-that-apply survey question as 1 bar per response option, showing the proportion of respondents who chose each option. Here is what some example data looks like for this structure, assuming there was a select-all-that-apply question with 3 response options and 5 respondents:
 
 ```{r}
+library(tidyverse)
+
 df <- tibble(
   respondent_id = 1:5,
   option_a = c(1, 0, 1, 1, 0),
@@ -21,7 +28,7 @@ df
 
 ## From Scratch
 
-If you wanted to create this graph without using generative AI to assist you, how would you get started? Write a brief paragraph discussing how you would tackle the issue of writing this code. What would be challenging? What seems straightforward, if anything?
+1. If you wanted to create this graph without using generative AI to assist you, how would you get started? Write a brief paragraph discussing how you would tackle the issue of writing this code. What would be challenging? What seems straightforward, if anything?
 
 > Your Answer
 
@@ -43,8 +50,6 @@ Here is the response that ChatGPT returned, followed by the code:
 
 ```{r}
 #| label: chat gpt code
-
-library(tidyverse)
 
 # Example data
 df <- tibble(
@@ -83,15 +88,11 @@ summary_df |>
 
 ## Your Turn
 
-1. Run the code above. Does it work?
+2. Run the code above. Does it work?
 
 > Answer here
 
-2. How does the R code look? Does it use the standard building blocks we have learned in class?
-
-> Answer here
-
-3. Does the graph appear to solve the problem that I prompted? 
+3. How does the R code look? Does it use the standard building blocks we have learned in class?
 
 > Answer here
 
@@ -105,30 +106,49 @@ df
 
 ```
 
-5. By hand/calculator, calculate the number of respondents that chose option a, option b, and option c. Do these counts match what is shown in the graph? 
+5. By hand/calculator, calculate the **number** of respondents that chose option a, option b, and option c. Do these counts match what is shown in the graph? Does the graph appear to solve the problem that I prompted? 
 
 > Answer here
 
-6. Where did ChatGPT go wrong? Look at each section of the code and explain where you think ChatGPT made a mistake.
+6. ChatGPT also told me "You can replace `n` with `percent` in the y-axis if you prefer percentages." Make this edit in the code and graph the result (change y=n to y=percent). Does the graph appear to show the solution that I was looking for?
 
 > Answer here
 
-7. Now it's your turn. Using the same example dataset that ChatGPT generated, can you edit or write new code to correctly graph the **number** of respondents that selected each options?
+```{r}
+
+# Plot percents
+summary_df |>
+  ggplot(aes(x = fct_reorder(option, n), y = n)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Selections per Option",
+    x = "Option",
+    y = "Number of Selections"
+  ) +
+  theme_minimal()
+
+```
+
+7. By hand/calculator, calculate the **percent** of respondents that chose option a, option b, and option c. Do these percents match what is shown in the graph? Does the graph appear to solve the problem that I prompted? 
+
+> Answer here
+
+
+
+8. Where did ChatGPT go wrong? Look at each section of the code (and/or run various pieces of it) and explain where you think ChatGPT made a mistake.
+
+> Answer here
+
+9. Now it's your turn. Using the same example dataset that ChatGPT generated, can you edit or write new code to correctly graph the **percent** of respondents that selected each options? Be sure to comment your code to explain what it is doing. You can use the original ChatGPT code as a starting point. 
 
 ```{r}
 
 ```
 
 
-8. Can you edit the code to now graph the percentage of respondents that selected each response option?
-
-```{r}
-
-```
-
-
-9. What did you learn about using ChatGPT to generate R code? How was it helpful? How did it hinder you?
+10. What did you learn about using ChatGPT to generate R code? How was it helpful? How did it hinder you?
 
 > Answer Here
 
-10. Render your .qmd file, download the resulting .html file, and submit your file to Canvas for credit. Each students should submit their own file. 
+11. Render your .qmd file, download the resulting .html file, and submit your file to Canvas for credit. Each students should submit their own file. 
