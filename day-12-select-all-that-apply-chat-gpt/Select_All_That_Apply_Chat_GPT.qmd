@@ -27,7 +27,7 @@ If you wanted to create this graph without using generative AI to assist you, ho
 
 ## Code from ChatGPT
 
-Within my ChatGPT Custom R project, I gave the following prompt:
+Within my ChatGPT Custom R project using model 4o, I gave the following prompt:
 
 > how to graph a select all that apply question. each option is listed in its own binary column
 
@@ -130,3 +130,5 @@ df
 9. What did you learn about using ChatGPT to generate R code? How was it helpful? How did it hinder you?
 
 > Answer Here
+
+10. Render your .qmd file, download the resulting .html file, and submit your file to Canvas for credit. Each students should submit their own file. 
