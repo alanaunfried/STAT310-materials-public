@@ -1,0 +1,294 @@
+---
+title: "Nested Proportions for Titantic Survivors - KEY"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse)
+library(janitor)
+```
+
+## The Titanic Data  
+
+```{r}
+titanic_full <- janitor::clean_names(read_csv("titanic3.csv"))
+names(titanic_full) #list of the variable names
+```
+
+```{r}
+titanic_full |> head(20) #lists first 20 rows
+```
+
+
+Let's do some basic data wrangling to "clean up" some of our variable levels to create factors instead of numbers.
+
+```{r}
+titanic_full <- mutate(titanic_full, 
+                       passenger_class = fct_recode(as.factor(pclass),
+                                                    "1st" = "1", 
+                                                    "2nd" = "2", 
+                                                    "3rd" = "3"),
+                       survival = fct_recode(as.factor(survived),
+                                             "Died" = "0", 
+                                             "Survived" = "1"))
+titanic_full |> head(20)
+```
+
+
+Let's also take a look at our data and what is missing:
+
+```{r}
+library(naniar)
+titanic_full |> 
+  gg_miss_var(facet = sex) 
+```
+
+
+
+
+
+### Women and Children First?
+
+```{r}
+titanic_full |> 
+  count(passenger_class, sex, survival)
+```
+
+
+
+## Stacked and Side-by-Side Bar Plots
+
+### Stacked Bar Plot  
+
+```{r}
+titanic_full |> 
+  drop_na(survival) |> #excludes rows where survival is NA
+  ggplot(aes(x = passenger_class, fill = survival)) + #specifies aes() universally for all geoms
+  geom_bar(position = "fill") + #modifer for stacked but proportions
+  scale_fill_manual(values = c("#b3b3b3a0", "#2b8cbed0")) + #colors set manually
+  labs(x = "Passenger Class",
+       y = "Proportion of Passengers",
+       title = "Survival by Ticket Class on the Titanic") + 
+  theme_minimal()
+```
+
+### Side-by-Side Bar Plot
+
+```{r}
+titanic_full |> 
+  drop_na(survival) |> 
+  ggplot(aes(x = survival)) +  #sets x aes to survival
+  geom_bar(aes(y = after_stat(prop),  #specifies we want the bar heights to be proportions
+               group = passenger_class), #specifies that we want to condition on passenger class
+           position = "dodge") + #modifier for dodge
+  facet_wrap(~passenger_class, nrow = 1) + #splits graphs by passenger class
+  theme_bw() + 
+  labs(x = "Passenger Class",
+       y = "Proportion of Passengers",
+       title = "Survival by Ticket Class on the Titanic") 
+
+#could also fill and incorporate Sex as well
+titanic_full |> 
+  drop_na(survival) |> 
+  ggplot(aes(x = sex, fill = survival)) +  #sets x aes to survival
+  geom_bar(position = "fill") + #modifier for fill
+  facet_wrap(~passenger_class, nrow = 1) + #splits graphs by passenger class
+  theme_bw() +
+  scale_fill_manual(values = c("#b3b3b3a0", "#2b8cbed0")) + 
+  labs(x = "Passenger Class",
+       y = "Proportion of Passengers",
+       title = "Survival by Ticket Class and Sex on the Titanic") 
+
+```
+
+If we wanted to add sex to our visualization, we might want to consider removing redundant information - if we know the proportion that died we then know the proportion that survived (or vice versa). 
+
+This version of the bar graph only show the proportion that survived in each group.
+
+```{r}
+titanic_full |> 
+  count(passenger_class, sex, survival) |>  #counts individuals by class, sex, and survival status and stores the count in a variable called 'n'
+  group_by(passenger_class, sex) |> #groups class and sex for the next calcuation in mutate()
+  mutate(proportion = n/sum(n)) |> #sum(n) will add up just the total by class and sex and then we divide the count for survival by those totals
+  filter(survival == "Survived") |> #removes the proportions for "Died"
+  ggplot(aes(x = sex, y = proportion, fill = passenger_class)) + #sets universal aes()
+  geom_col(position = "dodge") + #modfied, notice geom is col since we specified y = proportion as our bar height
+  theme_bw() + 
+  scale_fill_viridis_d() + #automatically uses viridis scale
+  labs(title = "Survival by Sex and Class on the Titanic",
+       subtitle = "Women were more likely to survive than men reglardless of class on the Titanic",  #simple way to add annotation
+       x = "Sex of Passenger", 
+       y = "Proportion of Each Sex that Surived by Class", 
+       fill = "Passenger Class") +
+  theme(legend.position = "bottom") #moves legend to bottom
+```
+
+
+## Stacked Density Plots
+One of the ideas is "Women and Children First!" so we may want to see if survival is impacted by both age and sex.  
+
+```{r}
+titanic_full |> 
+  ggplot(aes(x = age, #using a quantitative value here, or ordered variable
+             fill = survival,   #fills in color
+             color = survival)) +  #colors the line too 
+  geom_density(position = "fill") +  #geometry density with modifier
+  scale_fill_manual(values = c("#b3b3b3a0", "#2b8cbed0")) + #specifies colors for fill aes
+  scale_color_manual(values = c("#b3b3b3a0", "#2b8cbed0")) + #specifies colors for color aes
+  labs(title = "Survival by Age",
+       x = "Age of Passenger", 
+       y = "Proportion of Passengers that Survived", 
+       fill = "Passenger") +
+  theme_minimal() +
+  guides(color = "none") + #removes color legend since it is redundant
+  theme(legend.position = "bottom") 
+  
+```
+
+Is this pattern true regardless of sex?
+
+```{r}
+titanic_full |> 
+  drop_na(sex) |> 
+  ggplot(aes(x = age, 
+             fill = survival, 
+             color = survival)) + 
+  geom_density(position = "fill") + 
+  scale_fill_manual(values = c("#b3b3b3a0", "#2b8cbed0")) +
+  scale_color_manual(values = c("#b3b3b3a0", "#2b8cbed0")) +
+  labs(title = "Survival by Age",
+       x = "Age of Passenger", 
+       y = "Proportion of Passengers", 
+       fill = "Passenger") +
+  guides(color = "none") + 
+  facet_grid(sex ~ passenger_class) + #faceted by sex and class
+  theme_classic() +
+  theme(legend.position = "bottom") #always do theme mods after setting the theme
+```
+
+
+## Mosaic Plot
+
+Fall 2025: Unfortunately with the latest version of R, the geom_mosaic funciton is currently not working! This is one of the problems with open-source software and relying on packages that other people have created. I have left the code here but commented out the code since it is not currently working. 
+
+```{r}
+# library(ggmosaic)
+# 
+# titanic_full |>
+#   ggplot() +
+#   geom_mosaic(aes(x = product(passenger_class, sex),  #sets the two variables (more can be set)
+#                   fill = survival), #fills by survival
+#               na.rm = TRUE, #tells it to ignore na
+#               offset = 0.02) + #offsets the rectangles
+#   labs(x = "Sex of Passenger", 
+#        y = "Passenger Class", 
+#        fill = "Survival",
+#        title = "Survival of Titanic Passengers",
+#        subtitle = "Women were more likely to survive and there were more male passengers") +
+#   theme(panel.background = element_blank(), #removes background
+#         axis.ticks = element_blank(), #removes tick marks
+#         legend.position = "bottom") + #adds legend
+#   scale_fill_manual(values = c("#b3b3b3a0", "#2b8cbed0")) +
+#   scale_x_productlist(breaks = c(0.2,0.75),  #specifies x-axis location
+#                       labels = c("Female","Male")) #specifies names
+```
+
+
+
+
+
+## Treemap
+
+```{r}
+library(treemapify)
+titanic_full |> 
+  count(passenger_class, survival) |> #creates counts first
+  drop_na() |>
+  ggplot(aes(area = n, # area aes() should be count
+             fill = survival,  #color of groups
+             subgroup = passenger_class)) +  #subgroup aes()
+  geom_treemap(color = "black") +  #generates treemap with black border
+  geom_treemap_subgroup_border(color = "black") +  #generates subgroup borders with black border
+  geom_treemap_subgroup_text(color = "black") + #adds text to id subgroup
+  scale_fill_manual(values = c("#b3b3b3a0", "#2b8cbed0")) +
+  labs(fill = "Outcome", 
+       title = "Survival by Passenger Class on the Titanic") +
+  theme(legend.position = "top")
+```
+
+Let's look at age
+
+```{r}
+titanic_full |> 
+  mutate(age_group = case_when(  #creates new variable called age_group
+    age < 18 ~ "Children",       #case_when lets you specify a range of values and then set the group name
+    age < 60 ~ "Middle Age", 
+    age < 100 ~ "Elderly")) |> 
+  count(sex, age_group, survival) |> 
+  drop_na() -> titanic_up
+
+ggplot(data = titanic_up,
+       aes(area = n, 
+           fill = survival, 
+           subgroup = age_group,
+           subgroup2 = sex,
+           color = age_group)) +
+  geom_treemap() +
+  geom_treemap_subgroup_border(color = "black") + 
+  geom_treemap_subgroup_text(place = "centre", 
+                             grow = TRUE, 
+                             alpha = 0.75,
+                             fontface = "italic", 
+                             min.size = 0) + 
+  geom_treemap_subgroup2_border(color = "white", size = 1) +
+  geom_treemap_subgroup2_text(aes(color = sex), 
+                              grow = FALSE,
+                              size = 12) +
+  labs(fill = "Outcome", 
+       title = "Survival by Age Group and Sex on the Titanic") + 
+  guides(color = "none") +
+  scale_color_manual(values = c("#215091","#912150","#509121",
+                                "#2a2191",	"#218891")) +
+  scale_fill_manual(values = c("#d2dce9","#90a7c8")) +
+  theme_bw() + 
+  theme(legend.position = "bottom")
+```
+
+
+
+
+## Sankey Plot              
+
+```{r}
+library(ggalluvial)
+
+titanic_full |> 
+  count(survival, sex, passenger_class) |>   #summarizes counts
+  ggplot(aes(y = n,   #counts
+             axis1 = sex,  #first group
+             axis2 = passenger_class,  #second group
+             axis3 = survival, #third group
+             fill = survival)) +  #color choice variable
+  geom_alluvium(alpha = 0.75, reverse = TRUE) +  #alpha is transparency, reverse is the order variables are printed
+  geom_stratum(width = 1/8, reverse = TRUE) + #how wide each axis variable is
+  geom_text(stat = "stratum", 
+            aes(label = after_stat(stratum)),  #adds labels to stratum
+            reverse = TRUE) +
+  guides(fill = "none") + #removes fill legend
+  ggtitle("Titanic Survival by Class and Sex") +
+  theme_void() +
+  scale_fill_viridis_d(begin = 0.25, end = 0.75)
+```
+
+
+
+
+
+
