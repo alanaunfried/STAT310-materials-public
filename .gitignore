@@ -9,3 +9,11 @@ STAT310-materials-public.Rproj
 
 #ignore the destop.ini files from any subdirectory
 **/desktop.ini
+
+#ignore all keys, * means any file ending in these phrases
+*key.qmd
+*key.html
+*key.rmd
+*KEY.qmd
+*KEY.html
+*KEY.rmd
