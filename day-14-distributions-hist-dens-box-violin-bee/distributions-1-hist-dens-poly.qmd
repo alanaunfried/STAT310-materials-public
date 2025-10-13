@@ -1,0 +1,279 @@
+---
+title: "Distributions: Histograms, Densities, and Polygons with Palmer's Penguins"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+#install.packages("palmerpenguins")
+library(palmerpenguins)
+library(tidyverse)
+
+```
+
+## Loading Data from a Package
+
+The Palmer Penguin data is contained in the package `palmerpenguins`.  To load the data, we use the `data()` function once the package has been called by `library()`, which we included in the setup chunk.  
+
+Notice how I named the code chunk `load-data` - this can be helpful in a longer document when you are trying to find specific code chunks.  You can use the bottom left index to search through the document.  
+```{r}
+#| label: load-data
+data("penguins")
+```
+
+
+## Histograms and Density Plots Demonstration
+
+
+### Histograms 
+
+
+Here is a histogram for bill length. Notice what happens when we move some arguments outside of the `aes()`.
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_histogram(binwidth = 3, 
+                 color = "black",
+                 fill = "#34baeb") +
+  theme_light() +
+  labs(x = "Bill Length (mm)",
+       y = "Number of Penguins",
+       title = "Penguins from Palmer's Archipelago")
+```
+
+You should always try several options for the bin width.
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_histogram(binwidth = 1, 
+                 color = "black",
+                 fill = "#34baeb") +
+  theme_light() +
+  labs(x = "Bill Length (mm)",
+       y = "Number of Penguins",
+       title = "Penguins from Palmer's Archipelago")
+```
+
+
+
+### Density Plots
+
+Here are the options for your kernel type:  
+`kernel = c("gaussian", "epanechnikov", "rectangular", "triangular", "biweight", "cosine", "optcosine")`
+
+`adjust` is a multiplicate bandwidth adjustment. This makes it possible to adjust the bandwidth while still using the a bandwidth estimator. For example, adjust = 1/2 means use half of the default bandwidth.  You can set the bandwidth directly using `bw = ` as well.
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_density(adjust = 0.5, 
+               kernel = "gaussian", 
+               color = "black",
+               fill = "#34baeb",
+               alpha = 0.5) +
+  theme_light() +
+  labs(x = "Bill Length (mm)",
+       y = "Density",
+       title = "Penguins from Palmer's Archipelago")
+```
+
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_density(adjust = 1.5, 
+               kernel = "gaussian", 
+               color = "black",
+               fill = "#34baeb",
+               alpha = 0.5) +
+  theme_light() +
+  labs(x = "Bill Length (mm)",
+       y = "Density",
+       title = "Penguins from Palmer's Archipelago")
+```
+
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_density(adjust = 0.5, 
+               kernel = "rectangular", 
+               color = "black",
+               fill = "#34baeb",
+               alpha = 0.5) +
+  theme_light() +
+  labs(x = "Bill Length (mm)",
+       y = "Density",
+       title = "Penguins from Palmer's Archipelago")
+
+```
+
+
+
+
+### Frequency Polygons
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_freqpoly(binwidth = 1, 
+                lwd = 1) +
+  theme_minimal() +
+  labs(title = "Penguin Bill Length",
+       x = "Bill Length (mm)",
+       y = "Number of Penguins")
+```
+
+```{r}
+penguins |> 
+  ggplot(aes(x = bill_length_mm)) +
+  geom_freqpoly(binwidth = 3, 
+                lwd = 1) +
+  theme_minimal() +
+  labs(title = "Penguin Bill Length",
+       x = "Bill Length (mm)",
+       y = "Number of Penguins")
+```
+
+
+
+
+## Your Turn
+
+Fill in the blanks to recreate the provided visualization. Provide a critique of your visualization as well.
+
+
+### Group 1: Stacked Histogram
+
+```{r}
+penguins|> 
+  filter(species == "_____") |> 
+  drop_na(bill_length_mm, sex) |> 
+  ggplot(aes(x = ________, fill = ________)) + 
+  geom_histogram(binwidth = ______, 
+                 color = "grey",
+                 alpha = 0.5,
+                 position = "________") +
+  theme_minimal() +
+  labs(title = "_______",
+       x = "__________",
+       y = "__________",
+       _____ = "Sex") +
+  scale_______viridis_d()
+```
+
+
+
+### Group 2: Overlaid Histogram
+
+```{r}
+penguins|> 
+  filter(species == "________") |> 
+  drop_na(bill_length_mm, sex) |> 
+  ggplot(aes(x = ______, fill = ________)) + 
+  geom_histogram(binwidth = 1, 
+                 color = "grey",
+                 alpha = 0.5,
+                 _______ = "identity") +
+  theme_minimal() +
+  labs(title = "_______",
+       x = "__________",
+       y = "__________",
+       _____ = "Sex") +
+  scale_______viridis_d()
+```
+
+
+
+### Group 3: Density Plot
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm) |> 
+  ggplot(aes(x = ________)) + 
+  geom_density(aes(fill = __________), alpha = 0.35) +
+  theme_minimal() +
+  labs(title = "_______",
+       x = "__________",
+       y = "__________",
+       _____ = "Species") +
+  scale_______viridis_d()
+```
+
+
+
+### Group 4: Frequency Polygons Plots
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm) |> 
+  ggplot(aes(x = ___________)) + 
+  geom_freqpoly(aes(________ = species), binwidth = 1, lwd = 1.25) +
+  theme_minimal() +
+  labs(title = "_______",
+       x = "__________",
+       y = "__________",
+       _____ = "Species") +
+  scale_______viridis_d()
+```
+
+
+### Group 5: Faceted Histogram
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm) |> 
+  ggplot(aes(x = __________)) + 
+  geom_histogram(aes(fill = _________), binwidth = 1, alpha = 0.5) +
+  theme_minimal() +
+  facet_wrap(~_______, ncol = 1) + 
+    labs(title = "_______",
+       x = "__________",
+       y = "__________",
+       _____ = "Species") +
+  scale_______viridis_d() +
+  guides(fill = "________")
+```
+
+### Group 6: Faceted Density Plots
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm, sex) |> 
+  ggplot(aes(x = _________)) + 
+  geom_density(aes(fill = ______), alpha = 0.35) +
+  facet_wrap(~_______, ncol = 1) + 
+  theme_minimal() +
+    labs(title = "_______",
+       x = "__________",
+       y = "__________",
+       _____ = "Species") +
+  scale_______viridis_d() +
+```
+
+### Group 7: Faceted Density + Histogram Plots
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm) |> 
+  ggplot(aes(x = _________, fill = _________)) + 
+  geom_histogram(aes(y = ..density..),
+                 _________ = 0.5, color = "black") +
+  geom_density(alpha = _________) +
+  facet_wrap(~_________, ncol = 1) +
+  theme_minimal() +
+  labs(title = "_________",
+       x = "_________",
+       y = "_________") +
+  guides(fill = "_________") +
+  scale___________viridis_d()
+
+```

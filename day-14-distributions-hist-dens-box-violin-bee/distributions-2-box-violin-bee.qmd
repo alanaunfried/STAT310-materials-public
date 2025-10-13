@@ -1,0 +1,310 @@
+---
+title: "Distributions: Boxplots, Violin Plots, Beeswarm, Raincloud etc with Palmer's Penguins"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(echo = TRUE, comment="")
+#install.packages("palmerpenguins")
+library(palmerpenguins)
+library(tidyverse)
+
+library(ggridges)   #for ridgeline densities
+library(ggbeeswarm) #for beeeswarm (or quasi-random) plots
+library(ggtext)     #for adding text on ridgeline plots
+
+library(ggdist)     #for raincloud plots
+
+```
+
+## Loading Data from a Package
+
+The Palmer Penguin data is contained in the package `palmerpenguins`. To load the data, we use the `data()` function once the package has been called by `library()`, which we included in the setup chunk.
+
+Notice how I named the code chunk `load-data` - this can be helpful in a longer document when you are trying to find specific code chunks. You can use the bottom left index to search through the document.
+
+```{r}
+#| label: load-data
+data("penguins")
+```
+
+## Boxplots, Dotplots, and Violin plots
+
+Overlaying the values via the jitter plot can make our boxplot "more honest" so that we can just if we have enough data to trust the summary statistics used to create the distribution. This is true for both boxplots and violin plots.
+
+### Boxplot + Jitter
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm, sex) |> 
+  #notice, by setting universal aes() in ggplot function, we don't have to repeat them in each geometry
+  ggplot(aes(x = bill_length_mm,  
+             #order the species based on median bill length
+             y = fct_reorder(species, 
+                             .x = bill_length_mm,
+                             .fun = median))) +  
+  #we map fill in geom_boxplot, because this aesthetic is specific to this geometry
+  geom_boxplot(aes(fill = species), alpha = 0.5) +
+  theme_minimal() +
+  labs(title = "Penguin Culmen Length",
+       x = "Culmen Length (mm)",
+       y = "Penguin Species") +
+  scale_fill_viridis_d() +
+  #we map color in geom_jitter, because this aesthetic is specific to this geometry
+  geom_jitter(aes(color = species), 
+              alpha = 0.5, height = 0.25) +
+  guides(color = "none", fill = "none") + 
+  scale_color_viridis_d()
+  
+```
+
+### Violin Plot + Jitter
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm, sex) |> 
+  ggplot(aes(x = bill_length_mm,  
+             y = fct_reorder(species, 
+                             .x = bill_length_mm,
+                             .fun = median))) +
+  geom_violin(aes(fill = species), 
+              alpha = 0.25) +
+  theme_minimal() +
+  labs(title = "Penguin Culmen Length",
+       x = "Culmen Length (mm)",
+       y = "Penguin Species") +
+  scale_fill_viridis_d() +
+  geom_jitter(aes(color = species), height = 0.25) +
+  scale_color_viridis_d() +
+  guides(color = "none", fill = "none")
+```
+
+Use can use the package `ggbeeswarm` to "fill in" the violin plot.
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm, sex) |> 
+  ggplot(aes(x = bill_length_mm,  
+             y = fct_reorder(species, 
+                             .x = bill_length_mm,
+                             .fun = median))) +
+  geom_violin(aes(fill = species), 
+              alpha = 0.25) +
+  theme_minimal() +
+  labs(title = "Penguin Culmen Length",
+       x = "Culmen Length (mm)",
+       y = "Penguin Species") +
+  scale_fill_viridis_d() +
+  #geom_quasirandom creates beeswarm 
+  geom_quasirandom(aes(color = species), 
+                   alpha = 0.75) +
+  scale_color_viridis_d() + 
+  guides(color = "none", fill = "none")
+
+
+```
+
+### Ridge Plots
+
+We can use the package `ggridges` to create ridge plots and `ggtext` to add in labels
+
+```{r}
+labels_n <- penguins |> 
+  drop_na(bill_length_mm, sex) |> 
+  group_by(species) |> 
+  summarise(n = n(), m = mean(bill_length_mm, na.rm = TRUE)) |> 
+  arrange(m) #I create the labels first
+
+penguins |> 
+  drop_na(bill_length_mm, sex) |> 
+  ggplot(aes(x = bill_length_mm,  
+             y = fct_reorder(species, 
+                             .x = bill_length_mm,
+                             .fun = mean))) +
+  geom_density_ridges(aes(fill = sex),
+                      bandwidth = 1,
+                      rel_min_height = 0.01,
+                      scale = 0.99) +
+  theme_minimal() +
+  labs(title = "Penguin Culmen Length",
+       x = "Culmen Length (mm)",
+       y = "Penguin Species",
+       fill = "Sex") +
+  scale_fill_viridis_d(alpha = 0.5) +
+  theme(legend.position = "bottom") +
+  geom_text(data = labels_n, aes(y = species,
+                x = 60, 
+                label = paste0("n=",n)),
+            nudge_y = 0.1) 
+```
+
+## Raincloud Plots
+
+We can use the package `ggdist` to help us form a raincloud plot. Here is the starting code. Modify the code to make it more visually appealing. Check out some of the tutorial for how to addjust aspects of each geometry.
+
+```{r}
+penguins |> 
+  drop_na(bill_length_mm) |> 
+  ggplot(aes(x = bill_length_mm,  
+             y = fct_reorder(species, 
+                             .x = bill_length_mm,
+                             .fun = median),
+             fill = species)) +
+  stat_halfeye(alpha = 0.5) +
+  stat_dots(side = "bottom") +
+  geom_boxplot(alpha = .2, width=0.1) +
+  theme_minimal() +
+  labs(title = "Penguin Culmen Length",
+       x = "Culmen Length (mm)",
+       y = "Penguin Species") +
+  scale_fill_viridis_d() +
+  scale_color_viridis_d() + 
+  guides(color = "none", fill = "none")
+```
+
+## Challenge - Recreate the Visualization
+
+To calculate bill ratio, you need to do the following
+
+```{r}
+penguins <- penguins |> 
+  mutate(bill_ratio = bill_length_mm/bill_depth_mm)
+```
+
+Now try to recreate the visualization provided.
+
+```{r}
+
+```
+
+
+
+
+Here is the final code for creating the raincloud plot shown in class. (Created by Cedric Scherer, intro [here](https://www.cedricscherer.com/2021/06/06/visualizing-distributions-with-raincloud-plots-and-how-to-create-them-with-ggplot2/) and code [here](https://gist.github.com/z3tt/8b2a06d05e8fae308abbf027ce357f01).)
+
+```{r}
+
+#keeping package list here so you can see exactly what is needed for this code
+library(dplyr)
+library(forcats)
+library(ggplot2)
+library(palmerpenguins)
+library(ggtext)
+library(colorspace)
+library(ragg)
+
+#read in the inage and store it for use on graph
+url <- "https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/man/figures/lter_penguins.png"
+img <- magick::image_read((url))
+pic <- grid::rasterGrob(img, interpolate = TRUE)
+
+#create color palette
+pal <- c("#FF8C00", "#A034F0", "#159090")
+
+add_sample <- function(x) {
+  return(c(y = max(x) + .025, 
+           label = length(x)))
+}
+
+penguins |> 
+  group_by(species) |> 
+  mutate(bill_ratio = bill_length_mm / bill_depth_mm) |> 
+  filter(!is.na(bill_ratio)) |> 
+  ggplot(aes(x = fct_rev(species), y = bill_ratio)) + 
+  ggdist::stat_halfeye(
+    aes(color = species,
+        fill = after_scale(lighten(color, .5))),
+    adjust = .5, 
+    width = .75, 
+    .width = 0,
+    justification = -.4, 
+    point_color = NA
+  ) + 
+  geom_boxplot(
+    aes(color = stage(species, after_scale = darken(color, .1, space = "HLS")),
+        fill = after_scale(desaturate(lighten(color, .8), .4))),
+    width = .42, 
+    outlier.shape = NA
+  ) +
+  geom_point(
+    aes(color = stage(species, after_scale = darken(color, .1, space = "HLS"))),
+    fill = "white",
+    shape = 21,
+    stroke = .4,
+    size = 2,
+    position = position_jitter(seed = 1, width = .12)
+  ) + 
+  geom_point(
+    aes(fill = species),
+    color = "transparent",
+    shape = 21,
+    stroke = .4,
+    size = 2,
+    alpha = .3,
+    position = position_jitter(seed = 1, width = .12)
+  ) + 
+  stat_summary(
+    geom = "text",
+    fun = "median",
+    aes(label = round(after_stat(y), 2),
+        color = stage(species, after_scale = darken(color, .1, space = "HLS"))),
+    family = "Roboto Mono",
+    fontface = "bold",
+    size = 4.5,
+    vjust = -3.5
+  ) +
+  stat_summary(
+    geom = "text",
+    fun.data = add_sample,
+    aes(label = paste("n =", after_stat(label)),
+        color = stage(species, after_scale = darken(color, .1, space = "HLS"))),
+    family = "Roboto Condensed",
+    size = 4,
+    hjust = 0
+  ) +
+  coord_flip(xlim = c(1.2, NA), clip = "off") +
+  annotation_custom(pic, ymin = 2.9, ymax = 3.85, xmin = 2.7, xmax = 4.7) +
+  scale_y_continuous(
+    limits = c(1.57, 3.8),
+    breaks = seq(1.6, 3.8, by = .2),
+    expand = c(.001, .001)
+  ) +
+  scale_color_manual(values = pal, guide = "none") +
+  scale_fill_manual(values = pal, guide = "none") +
+  labs(
+    x = NULL,
+    y = "Bill ratio",
+    title = "Bill Ratios of Brush–Tailed Penguins (*Pygoscelis* spec.)",
+    subtitle = "Distribution of bill ratios, estimated as bill length divided by bill depth.",
+    caption = "Gorman, Williams & Fraser (2014) *PLoS ONE* DOI: 10.1371/journal.pone.0090081<br>Visualization: Cédric Scherer  &bull;    Illustration: Allison Horst"
+  ) +
+  theme_minimal(base_family = "Zilla Slab", base_size = 15) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text.x = element_text(family = "Roboto Mono"),
+    axis.text.y = element_text(
+      color = rev(darken(pal, .1, space = "HLS")), 
+      size = 18
+    ),
+    axis.title.x = element_text(margin = margin(t = 10),
+                                size = 16),
+    plot.title = element_markdown(face = "bold", size = 21),
+    plot.subtitle = element_text(
+      color = "grey40", hjust = 0,
+      margin = margin(0, 0, 20, 0)
+    ),
+    plot.title.position = "plot",
+    plot.caption = element_markdown(
+      color = "grey40", lineheight = 1.2,
+      margin = margin(20, 0, 0, 0)),
+    plot.margin = margin(15, 15, 10, 15)
+  )
+```
