@@ -41,6 +41,10 @@ Overlaying the values via the jitter plot can make our boxplot "more honest" so 
 ### Boxplot + Jitter
 
 ```{r}
+
+#use set.seed to control randomness of jitter. Need this option if using geom_jitter
+# set.seed(42)
+
 penguins |> 
   drop_na(bill_length_mm, sex) |> 
   #notice, by setting universal aes() in ggplot function, we don't have to repeat them in each geometry
@@ -59,6 +63,9 @@ penguins |>
   #we map color in geom_jitter, because this aesthetic is specific to this geometry
   geom_jitter(aes(color = species), 
               alpha = 0.5, height = 0.25) +
+  # alternative way to create jitter
+  # geom_point(aes(color = species), 
+  #             position = position_jitter(seed = 42)) +
   guides(color = "none", fill = "none") + 
   scale_color_viridis_d()
   

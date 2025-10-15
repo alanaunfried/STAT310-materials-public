@@ -1,0 +1,152 @@
+---
+title: "Annotations AltText and Captions"
+format: html
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+library(tidyverse)
+library(palmerpenguins)
+```
+
+## Palmer's Penguins
+To use the Palmer Penguin data we are going to do a bit of clean up first to variable names from the raw penguin data file. This is good practice for cleaning up 
+```{r}
+data("penguins") #loads penguin data sets  
+pengs <- penguins_raw |> 
+  janitor::clean_names() |> 
+  #on the left are the new names we are giving the penguin species. On the right are the orinal names in the dataset 
+  mutate(species = fct_recode(species, 
+             Adelie = "Adelie Penguin (Pygoscelis adeliae)",
+             Gentoo = "Gentoo penguin (Pygoscelis papua)",
+             Chinstrap = "Chinstrap penguin (Pygoscelis antarctica)"))
+
+#see all the variable names
+names(pengs)
+```
+
+
+
+## Add Faceted Annotations
+
+```{r}
+#Create the original faceted plot
+p <- pengs |> 
+  drop_na(sex) |> 
+  ggplot(aes(x = culmen_length_mm, y = culmen_depth_mm)) +
+  geom_point(aes(color = sex, shape = sex), size = 1.5) + #could be added in ggplot() line as well
+  labs(x = "Culmen (Bill) Length (mm)",
+       y = "Culmen Depth (mm)",
+       title = "Penguin Species Characteristic Relationships",
+       subtitle = "Palmer Penguins' Culmen Length and Depth",
+       color = "Penguin Sex") +
+  theme_bw() +
+  scale_color_viridis_d(begin = 0, end = 0.5) +
+  facet_wrap(~species) +
+  guides(shape = "none") +
+  theme(legend.position = "bottom")
+
+p
+```
+
+### Add basic annotations
+
+```{r}
+#If I have a faceted graph, then by default the annotation will appear in the same place on each facet
+p +
+  annotate(geom = "text", x=43, y=15, label = "Penguins", hjust="left", fontface="bold", size = 6)
+```
+
+### Add specific annotations to each facet
+
+```{r}
+
+#We need to use geom_text if we want to get a different annotation on each facet
+
+#First we create a data frame (a matrix) that include all the labels (annotations), which facet we want the labels on, and the coordinates of the labels.
+#You should specify the label for EACH facet, even if one is going to be blank. In this example, I am leaving the Chinstrap facet without an annotation
+#\n Means "new line" and will let you annotation span several lines. Compare Adelie vs Gentoo
+#species is the variable name that I used for faceting, so here I specify the levels of the variable I facet on to match where the annotations should go
+#then I give x and y coordinates for the annotations
+
+dat_text <- data.frame(
+  label = c("Adelie \nPenguins", "", "Gentoo Penguins"),
+  species   = c("Adelie", "Chinstrap", "Gentoo"),
+  x     = c(40, 40, 45),
+  y     = c(15, 15, 20)
+  )
+#see what the matrix of annotations looks like
+dat_text
+
+#Now add the text onto the graph, customzing size and font as well
+p + geom_text(data = dat_text,
+              mapping = aes(x = x, y = y, label = label), 
+              hjust = "center", size = 4, fontface = "bold")
+
+#If you want more examples of annotations on facets, see here:
+#https://stackoverflow.com/questions/11889625/annotating-text-on-individual-facet-in-ggplot2
+
+#Note that you can use the same concept to add arrows, circles, etc
+
+  
+```
+
+## Add Data Source in a Caption
+
+We know that an important aspect of deciding if we can trust a visualization is knowing the data source. In news articles or grahs that will be widely shared, it is important for the data source to be referenced on the graphic itself. The easiest way to do this is in a caption. This will add the caption in the bottom right corner of the graphic. 
+
+```{r}
+#Keep layering on to the original plot
+p + geom_text(data = dat_text,
+              mapping = aes(x = x, y = y, label = label), 
+              hjust = "center", size = 4, fontface = "bold") +
+  labs(caption = "Source: PalmerPenguins R Package")
+
+#You can change the location of the caption, font, etc by editing the THEME of the graph
+#hjust of 0 justifies the text to the left instead of right
+
+p + geom_text(data = dat_text,
+              mapping = aes(x = x, y = y, label = label), 
+              hjust = "center", size = 4, fontface = "bold") +
+  labs(caption = "Source: PalmerPenguins R Package") + 
+  theme(plot.caption = element_text(hjust = 0, face = "italic", color = "blue"))
+
+
+
+```
+
+## Add Alt Text
+
+As we learned in the reading, Alt Text can easily be added with the labs statement. Remember alt text should give a detailed description of the chart for a person who is unable to see the graph. 
+
+```{r}
+#| fig.alt: "A scatterplot faceted by species that shows bill length on the x axis and bill dept on the y axis. Color and shape of points maps to sex. We see a positive trend for each species, with male penguins generally having larger bills for each species. Overall, Gentoo pengins have a smaller depth than Adelie and Chinstrap."
+
+#See the 2 places you can put alt text in this code chunk
+
+#Keep layering on to the original plot
+p2 <- p + geom_text(data = dat_text,
+              mapping = aes(x = x, y = y, label = label), 
+              hjust = "center", size = 4, fontface = "bold") +
+  labs(caption = "Source: PalmerPenguins R Package",
+       alt = "Does this alt text work?.") + 
+  theme(plot.caption = element_text(hjust = 1, face = "italic", color = "#238A8DFF"))
+
+p2
+
+#check if the alt text is working (print the text) from labs function
+get_alt_text(p2)
+
+#Save the graph. Now a person using a screen reader will be able to hear a description of the graph!
+ggsave("penguins_alt.png", plot = p2, device = "png", )
+
+
+```
+
+
