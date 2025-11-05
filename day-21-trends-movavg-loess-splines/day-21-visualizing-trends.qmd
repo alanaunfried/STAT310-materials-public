@@ -1,0 +1,217 @@
+---
+title: "Visualizing Trends"
+format:
+  html:
+    embed-resources: true
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(sweep)      # Broom-style tidier for the forecast package
+library(forecast)   # Forecasting models and predictions package
+library(timetk)     # Functions working with time series
+library(tidyquant)  # Functions for moving averages
+```
+
+## Time Series Decomposition
+Load in the data:
+
+```{r}
+tmsr <- read_csv("tmsr.csv")
+```
+
+
+For simple time series, a line plot is sufficient.
+
+```{r}
+tmsr |> 
+ggplot(mapping = aes(x = Quarter, y = PowerLoad)) +
+  geom_point() + 
+  geom_line() +
+  xlab("Quarter") + ylab("Power Loads (megawatts)") +
+  theme_tq()
+```
+
+
+
+### Moving Averages
+
+To look at trend using the moving average we must identify the number of time points we want to average over. There is an option to use a built in fucntion but it takes the previous `n` points not the points before and after. 
+
+```{r}
+tmsr |> 
+  ggplot(mapping = aes(x = Quarter, y = PowerLoad)) +
+  geom_point() + geom_line() +
+  xlab("Quarter") + ylab("Power Loads (megawatts)") +
+  theme_tq() +
+  geom_ma(ma_fun = SMA, n = 4,   
+          linewidth = 1, color = "#1ABC9C") #moving average method over 4 time points
+```
+
+
+Here is how a linear regression model compares to a moving average model:
+```{r}
+tmsr |> 
+  ggplot(mapping = aes(x = Quarter, y = PowerLoad)) +
+  geom_point() + geom_line() +
+  xlab("Quarter") + ylab("Power Loads (megawatts)") +
+  theme_tq() +
+  geom_ma(ma_fun = SMA, n = 4, linewidth = 1, 
+          aes(color = "#1ABC9C")) +
+  geom_smooth(method = "lm", aes(color = "#76448A"), 
+              se = FALSE) +
+  scale_color_identity(guide = "legend",
+                       name = "Model Type",
+                       breaks = c("#1ABC9C","#76448A"),
+                       labels = c("4-point Moving Avg",
+                                  "Linear Model"))
+```
+
+To find the coefficients of the linear regression we must use the `lm` function and extract the information for the slope and intercept.
+```{r}
+model <- lm(PowerLoad ~ Quarter, data = tmsr)  
+coef(model)
+#predict(model)
+```
+
+
+## Plotting Time Series
+
+Here is a more complex set of time series data.
+
+```{r}
+beer <- read_csv("beer_sales.csv")
+```
+
+```{r}
+beer |>
+  ggplot(aes(x = date, y = price)) +
+  geom_line() +
+  geom_point() +
+  labs(title = "Beer Sales: 2010 through 2016",
+       y = "Sales Income (millions of dollars)",
+       x = "Month (Year)") +
+  theme_tq() 
+```
+
+
+
+## Moving Average
+Here is the moving average for the beer data - why did we choose 12 points for our average?
+
+```{r}
+beer |>
+  ggplot(aes(x = date, y = price)) +
+  geom_line(color = "#512E5F") +
+  geom_point(color = "#512E5F") +
+  labs(title = "Beer Sales: 2010 through 2016",
+       y = "Sales Income (millions of dollars)",
+       x = "Month (Year)") +
+  theme_tq() +
+  geom_ma(ma_fun = SMA, n = 12, linewidth = 1, color = "#1ABC9C") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+```
+
+
+## Time Series Decomposition
+Here is the time series decomposition for the beer data. We have to actually preprocess the data first to calculate the values that will be plotted for the decomposition and then we are basically just making line graphs.
+
+
+```{r}
+beer_ts <- tk_ts(beer, start = 2010, freq = 12, silent = TRUE)
+
+fit_decomposed <- beer_ts |>
+    decompose()
+
+sw_tidy_decomp(fit_decomposed, timetk_idx = TRUE) |> 
+  pivot_longer(-1, names_to = "decomposition", values_to = "timeseries") |> 
+  mutate(decomposition = factor(decomposition, 
+                                levels = c("observed", 
+                                           "trend", 
+                                          "season", 
+                                          "season_adj", 
+                                          "random"))) |> 
+  ggplot(aes(x = index, y = timeseries)) +
+  geom_line() +
+  facet_grid(decomposition ~ ., scales = "free_y") +
+  labs(x = "Month/Year", y = "Sales Income (millions)") +
+  theme_tq()
+```
+
+
+
+
+
+
+
+## LOESS and Spline Regression 
+
+Here are examples of simple linear regression, LOESS regression, and Spline Regression.
+
+```{r}
+
+#SLR "linear mode" method in geom_smooth
+beer |>
+  ggplot(aes(x = date, y = price)) +
+  geom_line(color = "#512E5F") +
+  geom_point(color = "#512E5F") +
+  labs(title = "Beer Sales: 2010 through 2016",
+       y = "Sales Income (millions of dollars)",
+       x = "Month (Year)") +
+  theme_tq() +
+  geom_smooth(method = "lm", se = FALSE) 
+
+#loess method in geom_smooth
+beer |>
+  ggplot(aes(x = date, y = price)) +
+  geom_line(color = "#512E5F") +
+  geom_point(color = "#512E5F") +
+  labs(title = "Beer Sales: 2010 through 2016",
+       y = "Sales Income (millions of dollars)",
+       x = "Month (Year)") +
+  theme_tq() +
+  geom_smooth(method = "loess", se = FALSE) 
+
+#spline method: lm in geom_smooth, formula includes spline package function
+beer |>
+  ggplot(aes(x = date, y = price)) +
+  geom_line(color = "#512E5F") +
+  geom_point(color = "#512E5F") +
+  labs(title = "Beer Sales: 2010 through 2016",
+       y = "Sales Income (millions of dollars)",
+       x = "Month (Year)") +
+  theme_tq() +
+  geom_smooth(method = lm, 
+              formula = y ~ splines::bs(x, 4), 
+              se = FALSE)
+```
+
+
+### Penguins - visualizing multiple linear regression lines  
+We can add multiple regression lines to a plot! Clean up the graph below:
+
+```{r}
+library(palmerpenguins)
+data(penguins)
+
+penguins |> 
+  drop_na(sex) |> 
+  #global aesthetics, apply to both points and regression lines
+  ggplot(aes(x = flipper_length_mm, 
+             y = body_mass_g, 
+             color = sex)) +  
+  geom_point() +
+  geom_smooth(method = lm, se = FALSE) +
+  scale_color_viridis_d(end = 0.7) +
+  facet_grid(. ~ species) + 
+  theme_bw()
+```
+
