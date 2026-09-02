@@ -1,0 +1,169 @@
+---
+title: "Jump Starting a Visualization"
+author: "Alana Unfried"
+format:
+  html:
+    embed-resources: true
+execute: 
+  warning: false
+  echo: true
+  error: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+#This particular code chunk has "include: false" which with override the global option "echo: true" and hide this chunk in the rendered file
+#echo: true in the YAML means the file will show code and output when it is rendered 
+
+
+#load packages that we will use in this file
+
+#loads ggplot2 and other packages
+library(tidyverse) 
+
+#can also directly load the ggplot2 package this way
+library(ggplot2)
+
+#load the package that includes the data we will use
+library(palmerpenguins)
+
+#If you are wanting to use a package that is not already installed on the server (or are using the desktop version of R), you will need to install the package first. For example, if you needed to install esquisse, you would uncomment the line below and install the package. This only needs to be done once! Comment the out again (#) after install. 
+#Note if you are using the Cal-ICOR server, you do NOT need to run this line of code; esquisse is already installed there. 
+#install.packages("esquisse")
+
+```
+
+# Welcome to Quarto and RStudio for STAT 310!
+
+In this file, we will explore quickly creating and customizing graphs in 3 ways.
+
+## Create a quick plot with ChatGPT
+
+We will quickly preview how ChatGPT can create R code for a plot, but then we won't revisit ChatGPT until we have a strong foundation with R. You can just watch Dr. U do this, or if you have genAI set up on your computer, you can see what output you get.
+
+Paste the following prompt into ChatGPT:
+
+"In R, use Quarto notation, use ggplot for graphics and use the native pipe and tidyverse for syntax. I am using the palmerpenguins R package. Create code to make a scatterplot of bill length on the x axis and bill depth on y. Color the points based on penguin species, using color-blind-friendly colors."
+
+```{r}
+#| label: chatgpt-r
+
+#paste the code chatgpt generates here
+
+```
+## Read in the Data
+
+In the library `palmerpenguins` there is a data set called `penguins`. We will load that and clean it up a bit.
+
+```{r}
+#| label: load-data
+
+#we already loaded the palmerpenguins package. Now we access the data we need from the package 
+data("penguins")
+
+#drop rows with missing values
+penguins_clean <- penguins |>
+  drop_na()
+```
+
+You can also click on the Dataset Name in the Environment tab to open a table of the data. Take note of the variable types in the data.
+
+
+## Using `esquisse` to get started with graphics
+
+We will be learning the basic structure of `ggplot2` (grammar of graphics plot 2) throughout the semester, but to help you get started we will use two packages to help us out, the first package being `esquisse`.
+
+First we need to load the package. Normally we would load any packages in the setup code chunk at the top of this file. 
+
+```{r}
+#| label: load-equisse
+
+library(esquisse)
+```
+
+Now we will get the "GUI" or graphic user interface running to make a visualization. Click the "play" button on the following code chunk. Use the interface to choose variables to include and make edits to the graph.
+
+Be sure to add a title and axis labels as well. When you have created the graph you want, copy the code to your clipboard using the "Code" Button in the bottom right corner.
+
+```{r}
+#| label: run-esquisse
+#| eval: false
+#| 
+esquisse::esquisser(penguins_clean)
+```
+
+Paste the code generated from esquisse into the code chunk below and run it:
+
+```{r}
+#| label: my-graph
+
+
+
+
+
+```
+
+## Quick note on saving graphs as objects
+
+As you can see from esquisse, if we run the code for the graph, it will print. However, the graph is not automatically saved as an object in R that we can easily reference. Here is a small example:
+
+```{r}
+#| label: graphical-object
+
+#Here is a basic graph. When we run this code, the graph is printed but not saved (the graph does not appear in your R environment)
+ggplot(penguins_clean) +
+  aes(x = bill_length_mm, y = bill_depth_mm, color = species) +
+  geom_point()
+
+#I can save the graph as an object, as shown here with the assignment operator <-. I am naming the object'gg_penguins' but you can name it anything
+gg_penguins <- ggplot(penguins_clean) +
+  aes(x = bill_length_mm, y = bill_depth_mm, color = species) +
+  geom_point()
+
+#In your R environment you should now see the 'gg_penguins' object
+
+#Now, I can just type 'gg_penguins' to print the graph
+gg_penguins
+
+#I can also continued to customize the gg object. For example:
+gg_penguins + scale_color_manual(values = c(Adelie = "#6B9BDF",
+                                   Chinstrap = "#1E5C26",
+                                   Gentoo = "#FFEA46")) 
+
+```
+
+
+## Making the graph your own with `ggThemeAssist`
+
+Run the code to load the library.
+
+```{r}
+#| label: load-themeassist
+
+library(ggThemeAssist)
+
+```
+
+Highlight the code for your visualization from esquisse. Then in the Menu under "Addins" go to "ggplot Theme Assistant". A GUI should appear that allows you to specify text sizes, colors, etc. After you finish the code will be added to the end of your graph!
+
+If the addin is not appearing for you, you can use the ggThemeAsssistGadget function shown in the next code chunk. Output your graph to an object called "gg" and then put "gg" in the function parentheses. Run that line of code, and the gadget should appear.
+
+```{r}
+#| label: gadget-themeassist
+
+#ggThemeAssistGadget(gg)
+
+
+```
+
+## Save your graph
+
+After your code for your graph (no + is needed), add a line of code like so:
+
+`ggsave(filename = "mypenguinplot.png")`
+
+and run the full code chunk. In your project folder you should now see a png file of your graph. Check the box next to the png (if on the server) and then select More \>\> Export. Upload to Canvas!
+
+Alternatively, you can save the plot without using code by clicking on the "Download" button on the right hand side of Esquisse. "More options" lets you customize the download. 
