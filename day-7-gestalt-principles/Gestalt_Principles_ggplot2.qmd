@@ -12,7 +12,7 @@ execute:
 #| include: false
 
 #load hte tidyverse
-library(tidyverse)
+library(tidyverse)  #can also add comments here
 
 #set the default theme for all graphs
 theme_set(theme_light())
@@ -28,14 +28,35 @@ fake_data <- read_csv("fake_data.csv")
 ### Proximity  
 
 ```{r}
+#create a dodged bar chart of fake data
+
+
+#code with no comments
 fake_data |> 
   ggplot(aes(x = Factor1, y = Response)) +
   geom_col(aes(fill = Factor2), 
-           position = position_dodge(),
+           position = "dodge",
+           color = "black")
+
+#same basic code below! With comments added
+
+#take the fake_data, and then... 
+# |> is called the "native pipe" and it means "and then"
+fake_data |> 
+  #initiate a plot and set the x and y variable mappings
+  #aes stands for "aesthetic"
+  # + is the same as a pipe, but only use it inside ggplot code
+  ggplot(aes(x = Factor1, y = Response)) +
+  #set the geometry to a bar plot, fill the column color based on Factor2
+  #geom_col because we specify the height of the bar with y
+  geom_col(aes(fill = Factor2), 
+           position = "dodge",
            color = "black") +
-  labs(title = "Proximity example",
-       x = "1st Factor",
+  labs(title = "Bar graph of factor relationships",
+       x = "Levels of Factor 1",
        fill = "2nd Factor")
+  #example of adding a color scale
+  #scale_fill_viridis_d()
 ```
 
 ### Encolsure + Proximity 
