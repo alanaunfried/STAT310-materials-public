@@ -15,6 +15,22 @@ execute:
 
 library(tidyverse)
 library(janitor)
+
+#for missing data analysis
+library(naniar)
+
+
+#for mosaic plots
+library(ggmosaic2)
+
+#for tree maps
+library(treemapify)
+
+#for sankey diagram
+library(ggalluvial)
+
+
+
 ```
 
 ## The Titanic Data  
@@ -47,13 +63,10 @@ titanic_full |> head(20)
 Let's also take a look at our data and what is missing:
 
 ```{r}
-library(naniar)
+#gg_mis_var from naniar package
 titanic_full |> 
   gg_miss_var(facet = sex) 
 ```
-
-
-
 
 
 ### Women and Children First?
@@ -178,10 +191,9 @@ titanic_full |>
 
 ## Mosaic Plot
 
-Fall 2025: Unfortunately with the latest version of R, the geom_mosaic funciton is currently not working! This is one of the problems with open-source software and relying on packages that other people have created. I have left the code here but commented out the code since it is not currently working. 
-
 ```{r}
-library(ggmosaic2)
+
+#from ggmosaic2 package
 
 titanic_full |>
   ggplot() +
@@ -227,7 +239,9 @@ titanic_full |>
 ## Treemap
 
 ```{r}
-library(treemapify)
+
+#uses treemapify package
+
 titanic_full |> 
   count(passenger_class, survival) |> #creates counts first
   drop_na() |>
@@ -287,7 +301,8 @@ ggplot(data = titanic_up,
 ## Sankey Plot              
 
 ```{r}
-library(ggalluvial)
+
+#ggalluvial package for sankey diagram
 
 titanic_full |> 
   count(survival, sex, passenger_class) |>   #summarizes counts
