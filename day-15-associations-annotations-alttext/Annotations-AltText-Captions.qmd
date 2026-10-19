@@ -132,7 +132,7 @@ p + geom_text(data = dat_text,
 As we learned in the reading, Alt Text can easily be added with the`fig-alt` chunk option. Remember alt text should give a detailed description of the chart for a person who is unable to see the graph.
 
 ```{r}
-#| fig.alt: "A scatterplot faceted by species that shows bill length on the x axis and bill dept on the y axis. Color and shape of points maps to sex. We see a positive trend for each species, with male penguins generally having larger bills for each species. Overall, Gentoo pengins have a smaller depth than Adelie and Chinstrap."
+#| fig-alt: "A scatterplot faceted by species that shows bill length on the x axis and bill dept on the y axis. Color and shape of points maps to sex. We see a positive trend for each species, with male penguins generally having larger bills for each species. Overall, Gentoo pengins have a smaller depth than Adelie and Chinstrap."
 
 #See the 2 places you can put alt text in this code chunk - which one works when you inspect the graph after rendering?
 
