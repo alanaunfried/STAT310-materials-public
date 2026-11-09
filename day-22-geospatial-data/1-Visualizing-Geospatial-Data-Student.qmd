@@ -42,7 +42,7 @@ ggplot(data = us_states,
                           group = group, fill = region)) +
   geom_polygon(color = "gray90", linewidth = 0.1) +
     coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-    guides(fill = FALSE)
+    guides(fill = "none")
 
 
 ```
@@ -197,7 +197,7 @@ ggplot() +
           aes(fill = as.factor(MAPCOLOR7)),  #notice this is an aesthetic!
           color = "#401D16", linewidth = 0.25) +
   scale_fill_viridis_d(option = "plasma") +
-  guides(fill = FALSE) +
+  guides(fill = "none") +
   theme_void()
 ```
 
